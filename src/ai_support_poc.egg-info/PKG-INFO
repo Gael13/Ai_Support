@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: ai-support-poc
+Version: 0.1.0
+Summary: POC interne d'analyse et de suggestion pour tickets Jira TheHive
+Requires-Python: >=3.11
+Requires-Dist: apscheduler==3.10.4
+Requires-Dist: fastapi==0.115.12
+Requires-Dist: pydantic-settings==2.8.1
+Requires-Dist: psycopg[binary]==3.2.6
+Requires-Dist: requests==2.32.3
+Requires-Dist: sqlalchemy==2.0.39
+Requires-Dist: uvicorn[standard]==0.34.0
