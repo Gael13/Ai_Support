@@ -16,17 +16,20 @@ from app.storage.tickets import get_agent_profile, replace_ticket_links, save_su
 
 def analyze_ticket_manual(jira_key: str, dry_run: bool = True) -> dict[str, Any]:
     settings = get_settings()
+    llm_provider = settings.llm_local_backend if settings.llm_provider == "local" else settings.llm_provider
+    llm_base_url = settings.groq_base_url if llm_provider == "groq" else settings.llm_base_url
+    llm_api_key = settings.groq_api_key if llm_provider == "groq" else None
     jira = JiraClient(
         base_url=settings.jira_base_url,
         email=settings.jira_email,
         api_token=settings.jira_api_token,
     )
     llm = LlmClient(
-        base_url=settings.groq_base_url if settings.llm_provider == "groq" else settings.llm_base_url,
+        base_url=llm_base_url,
         model=settings.llm_model,
         timeout=settings.llm_timeout_seconds,
-        provider=settings.llm_provider,
-        api_key=settings.groq_api_key if settings.llm_provider == "groq" else None,
+        provider=llm_provider,
+        api_key=llm_api_key,
     )
     session = None
     if not dry_run:
@@ -55,6 +58,7 @@ def analyze_ticket_manual(jira_key: str, dry_run: bool = True) -> dict[str, Any]
         if dry_run:
             preview = _build_preview_data(issue, comments_payload)
             similar: list[dict[str, Any]] = []
+            related_docs: list[dict[str, Any]] = []
             agent_profile = None
             summary = preview["summary"]
             description = preview["description"]
@@ -64,6 +68,7 @@ def analyze_ticket_manual(jira_key: str, dry_run: bool = True) -> dict[str, Any]
             assert session is not None
             ticket = upsert_ticket_from_jira(session, issue, comments_payload)
             similar = retrieve_similar_tickets(session, ticket)
+            related_docs = []
             replace_ticket_links(session, ticket, similar)
             agent_profile = get_agent_profile(session, ticket.assignee_display_name)
             comments = [
@@ -87,6 +92,7 @@ def analyze_ticket_manual(jira_key: str, dry_run: bool = True) -> dict[str, Any]
             description=description,
             comments=comments,
             similar_tickets=similar,
+            related_docs=related_docs,
             agent_profile=agent_profile,
         )
         result = llm.generate_json(prompt)
@@ -138,30 +144,56 @@ def analyze_demo_ticket(scenario_id: str) -> dict[str, Any]:
         raise ValueError(f"Unknown demo scenario: {scenario_id}.")
 
     settings = get_settings()
+    llm_provider = settings.llm_local_backend if settings.llm_provider == "local" else settings.llm_provider
+    llm_base_url = settings.groq_base_url if llm_provider == "groq" else settings.llm_base_url
+    llm_api_key = settings.groq_api_key if llm_provider == "groq" else None
     llm = LlmClient(
-        base_url=settings.groq_base_url if settings.llm_provider == "groq" else settings.llm_base_url,
+        base_url=llm_base_url,
         model=settings.llm_model,
         timeout=settings.llm_timeout_seconds,
-        provider=settings.llm_provider,
-        api_key=settings.groq_api_key if settings.llm_provider == "groq" else None,
+        provider=llm_provider,
+        api_key=llm_api_key,
     )
+    agent_profile = {
+        "agent_name": settings.demo_agent_name,
+        "style": settings.demo_agent_style,
+        "tone": "professional, calm, concise",
+        "structure": [
+            "acknowledge issue",
+            "share first impression carefully",
+            "request only the missing information that matters",
+            "propose immediate containment and prevention actions",
+        ],
+    }
+    logs = [
+        {"step": "load_demo_scenario", "status": "ok", "details": {"scenario_id": scenario_id, "ticket_key": scenario["ticket_key"]}},
+        {"step": "prepare_context", "status": "ok", "details": {"comments": len(scenario["comments"]), "similar_tickets": len(scenario["similar_tickets"]), "related_docs": len(scenario.get("related_docs", []))}},
+        {"step": "apply_agent_style", "status": "ok", "details": {"agent_name": settings.demo_agent_name, "style": settings.demo_agent_style}},
+    ]
     prompt = build_ticket_analysis_prompt(
         jira_key=scenario["ticket_key"],
         summary=scenario["summary"],
         description=scenario["description"],
         comments=scenario["comments"],
         similar_tickets=scenario["similar_tickets"],
-        agent_profile=None,
+        related_docs=scenario.get("related_docs", []),
+        agent_profile=agent_profile,
     )
+    logs.append({"step": "build_prompt", "status": "ok", "details": {"prompt_length": len(prompt)}})
     result = llm.generate_json(prompt)
+    logs.append({"step": "llm_generate", "status": "ok", "details": {"provider": llm_provider, "model": settings.llm_model}})
     note = format_internal_note(result, scenario["similar_tickets"])
+    logs.append({"step": "format_internal_note", "status": "ok", "details": {"note_length": len(note)}})
     return {
         "scenario_id": scenario_id,
         "jira_key": scenario["ticket_key"],
         "dry_run": True,
+        "agent_profile": agent_profile,
         "result": result,
         "internal_note": note,
         "similar_tickets": scenario["similar_tickets"],
+        "related_docs": scenario.get("related_docs", []),
+        "logs": logs,
     }
 
 

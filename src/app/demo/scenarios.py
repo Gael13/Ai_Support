@@ -34,18 +34,91 @@ DEMO_SCENARIOS: dict[str, dict[str, Any]] = {
             },
         ],
         "similar_tickets": [
+            {"jira_key": "DEMO-1842", "score": 0.93, "reason": "same_symptom, same_topology, same_memory_pressure"},
+            {"jira_key": "DEMO-2091", "score": 0.88, "reason": "same_outofmemoryerror, shared_services_on_single_host"},
+            {"jira_key": "DEMO-2217", "score": 0.82, "reason": "same_gc_pressure, same_swap_activity"},
+        ],
+        "related_docs": [
             {
-                "jira_key": "DEMO-1842",
-                "score": 0.93,
-                "reason": "same_symptom, same_topology, same_memory_pressure",
+                "title": "TheHive sizing guidance for single-node deployments",
+                "path": "docs/thehive/sizing/single-node.md",
+                "reason": "explains resource contention on all-in-one deployments",
             },
             {
-                "jira_key": "DEMO-2091",
-                "score": 0.88,
-                "reason": "same_outofmemoryerror, shared_services_on_single_host",
+                "title": "Runbook: Java OOM and GC troubleshooting",
+                "path": "docs/runbooks/java-oom-gc.md",
+                "reason": "covers heap sizing, GC pauses and prevention checks",
             },
         ],
-    }
+    },
+    "cortex-analyzer-timeout": {
+        "ticket_key": "DEMO-CORTEX-TIMEOUT",
+        "summary": "Cortex analyzers start timing out after upgrade and jobs remain in waiting state",
+        "description": (
+            "Since the last upgrade, several Cortex analyzers remain pending for a long time and then fail with timeout. "
+            "TheHive can still create cases, but enrichment is delayed or missing. The issue is intermittent."
+        ),
+        "comments": [
+            {
+                "author_name": "Customer",
+                "author_role": "customer",
+                "body": (
+                    "We are running Cortex with Docker. Some analyzers still work, but the heaviest ones now hit the timeout. "
+                    "CPU usage is high during bursts. We also changed the reverse proxy configuration during the same maintenance window."
+                ),
+            }
+        ],
+        "similar_tickets": [
+            {"jira_key": "DEMO-3104", "score": 0.91, "reason": "same_analyzer_timeout, same_docker_runtime"},
+            {"jira_key": "DEMO-2877", "score": 0.79, "reason": "same_proxy_change, same_post_upgrade_regression"},
+        ],
+        "related_docs": [
+            {
+                "title": "Cortex job timeout tuning",
+                "path": "docs/cortex/analyzers/timeouts.md",
+                "reason": "documents timeout and worker tuning",
+            },
+            {
+                "title": "Reverse proxy checklist for TheHive and Cortex",
+                "path": "docs/platform/reverse-proxy-checklist.md",
+                "reason": "useful because the incident started after proxy changes",
+            },
+        ],
+    },
+    "thehive-auth-proxy-loop": {
+        "ticket_key": "DEMO-AUTH-PROXY-LOOP",
+        "summary": "Users are redirected in a login loop after SSO is enabled behind reverse proxy",
+        "description": (
+            "After enabling SSO behind our reverse proxy, users authenticate successfully with the identity provider "
+            "but then return to TheHive and are redirected back to login again. API calls sometimes work, but the UI is unusable."
+        ),
+        "comments": [
+            {
+                "author_name": "Customer",
+                "author_role": "customer",
+                "body": (
+                    "The issue started immediately after we moved from direct access to an HTTPS reverse proxy. "
+                    "We may have changed X-Forwarded headers and cookie settings at the same time."
+                ),
+            }
+        ],
+        "similar_tickets": [
+            {"jira_key": "DEMO-4021", "score": 0.9, "reason": "same_sso_loop, same_proxy_headers"},
+            {"jira_key": "DEMO-3975", "score": 0.84, "reason": "same_cookie_scope_issue, same_https_transition"},
+        ],
+        "related_docs": [
+            {
+                "title": "SSO deployment checklist behind reverse proxy",
+                "path": "docs/thehive/auth/sso-proxy-checklist.md",
+                "reason": "covers redirect URI, cookie and forwarded headers",
+            },
+            {
+                "title": "Troubleshooting session cookies",
+                "path": "docs/platform/auth/session-cookies.md",
+                "reason": "relevant to login loop symptoms",
+            },
+        ],
+    },
 }
 
 

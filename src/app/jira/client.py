@@ -21,12 +21,23 @@ class JiraClient:
             }
         )
 
-    def search_issues(self, jql: str, fields: list[str], max_results: int = 50) -> dict[str, Any]:
+    def search_issues(
+        self,
+        jql: str,
+        fields: list[str],
+        max_results: int = 50,
+        start_at: int = 0,
+    ) -> dict[str, Any]:
         url = f"{self.base_url}/rest/api/3/search/jql"
         return self._perform_request(
             "get",
             url,
-            params={"jql": jql, "maxResults": max_results, "fields": ",".join(fields)},
+            params={
+                "jql": jql,
+                "maxResults": max_results,
+                "startAt": start_at,
+                "fields": ",".join(fields),
+            },
         )
 
     def get_issue(self, issue_key: str, fields: list[str] | None = None) -> dict[str, Any]:

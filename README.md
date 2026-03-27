@@ -55,6 +55,32 @@ pip install -e .
 uvicorn app.main:app --app-dir src --reload
 ```
 
+## Configuration locale recommandee
+
+Pour travailler avec un modele local, garde une configuration centree sur Ollama:
+
+```env
+LLM_PROVIDER=local
+LLM_LOCAL_BACKEND=ollama
+LLM_BASE_URL=http://localhost:11434
+LLM_MODEL=qwen2.5:14b-instruct
+LLM_TIMEOUT_SECONDS=120
+ENABLE_SCHEDULER=false
+```
+
+Et cote Ollama:
+
+```bash
+ollama serve
+ollama pull qwen2.5:14b-instruct
+curl http://localhost:11434/api/tags
+```
+
+Le code est pret pour d'autres providers plus tard. Pour l'instant:
+
+- `local` utilise le backend local configure, aujourd'hui `ollama`
+- `groq` reste disponible si tu veux revenir a une API distante
+
 ## Test en dry run
 
 Le mode `dry_run` genere l'analyse et la note Jira preview sans rien enregistrer en base et sans rien publier dans Jira.
@@ -67,6 +93,36 @@ ENABLE_SCHEDULER=false
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/analyze/SUPPORT-123?dry_run=true"
+```
+
+Pour declencher l'analyse depuis un webhook entrant:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/analyze/webhook/jira?dry_run=true" \
+  -H "Content-Type: application/json" \
+  -d '{"issue":{"key":"HELP-4000"}}'
+```
+
+Formats de payload supportes:
+
+- `{"issue":{"key":"HELP-4000"}}`
+- `{"issueKey":"HELP-4000"}`
+- `{"jira_key":"HELP-4000"}`
+- `{"ticket":{"key":"HELP-4000"}}`
+
+Protection optionnelle:
+
+```env
+WEBHOOK_TOKEN=ton-secret
+```
+
+Puis:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/analyze/webhook/jira?dry_run=true" \
+  -H "Content-Type: application/json" \
+  -H "X-Webhook-Token: ton-secret" \
+  -d '{"issue":{"key":"HELP-4000"}}'
 ```
 
 Pour lister rapidement des tickets Jira recents du projet configure et recuperer une vraie cle:
@@ -107,6 +163,8 @@ GROQ_BASE_URL=https://api.groq.com/openai/v1
 GROQ_API_KEY=ta-cle-groq
 LLM_MODEL=llama-3.3-70b-versatile
 ENABLE_SCHEDULER=false
+DEMO_AGENT_NAME=Gael
+DEMO_AGENT_STYLE=Professional, calm, concise. Acknowledge the issue, explain the likely direction, ask only the missing data that matters, and give concrete next steps.
 ```
 
 Test:
@@ -129,6 +187,73 @@ Analyser le scenario TheHive OOM sur machine 16 GB:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/analyze/demo/thehive-oom-16gb"
+```
+
+Vue presentation lisible:
+
+```bash
+curl "http://127.0.0.1:8000/analyze/demo/thehive-oom-16gb/report" | jq -r '.report.rendered_text'
+```
+
+Vue locale simple dans le navigateur:
+
+```text
+http://127.0.0.1:8000/demo-ui/
+```
+
+La reponse contient:
+
+- `result.analysis.first_impression`
+- `result.related_docs`
+- `result.suggested_reply_fr`
+- `result.suggested_reply_en`
+- `internal_note`
+- `logs`
+
+## Charger l'historique Jira et reconstruire les styles agent
+
+Backfill de l'historique local:
+
+```bash
+python scripts/backfill_jira_history.py --project HELP
+```
+
+Exemples utiles:
+
+```bash
+python scripts/backfill_jira_history.py --project HELP --max-issues 200
+python scripts/backfill_jira_history.py --jql 'project = HELP AND created >= -180d ORDER BY created ASC'
+```
+
+Reconstruction des profils de style:
+
+```bash
+python scripts/rebuild_style_profiles.py
+```
+
+Ou pour une personne precise:
+
+```bash
+python scripts/rebuild_style_profiles.py --agent-name "Gael Rivaud" --min-messages 12
+```
+
+Verification recommandee:
+
+1. lancer le backfill Jira
+2. lancer le rebuild des profils
+3. verifier les profils generes dans la sortie JSON du script
+4. analyser un ticket assigne a cette personne pour confirmer que le ton et la structure evoluent dans le bon sens
+
+Consultation des profils:
+
+```bash
+curl "http://127.0.0.1:8000/analyze/profiles" | jq
+```
+
+Vue locale:
+
+```text
+http://127.0.0.1:8000/demo-ui/profiles
 ```
 
 ## Priorite immediate

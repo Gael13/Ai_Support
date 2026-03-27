@@ -5,6 +5,7 @@ Summary: POC interne d'analyse et de suggestion pour tickets Jira TheHive
 Requires-Python: >=3.11
 Requires-Dist: apscheduler==3.10.4
 Requires-Dist: fastapi==0.115.12
+Requires-Dist: jinja2==3.1.6
 Requires-Dist: pydantic-settings==2.8.1
 Requires-Dist: psycopg[binary]==3.2.6
 Requires-Dist: requests==2.32.3

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Support Demo</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --sidebar: #1e1f23;
+        --sidebar-hover: #2a2c31;
+        --sidebar-active: #34363d;
+        --sidebar-text: #f3f4f6;
+        --sidebar-muted: #a1a1aa;
+        --surface: #ffffff;
+        --surface-soft: #fafafa;
+        --line: rgba(15, 23, 42, 0.08);
+        --text: #111827;
+        --muted: #6b7280;
+        --soft: #9ca3af;
+        --accent: #0f766e;
+        --shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+
+      .layout {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: auto;
+        padding: 16px 12px 18px;
+        background: var(--sidebar);
+        color: var(--sidebar-text);
+      }
+
+      .brand {
+        padding: 8px 10px 16px;
+      }
+
+      .brand-title {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .brand-copy {
+        margin-top: 8px;
+        color: var(--sidebar-muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .sidebar-label {
+        padding: 8px 10px;
+        color: var(--sidebar-muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .scenario-list {
+        display: grid;
+        gap: 6px;
+      }
+
+      .scenario-link {
+        display: block;
+        padding: 12px;
+        border-radius: 12px;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .scenario-link:hover {
+        background: var(--sidebar-hover);
+      }
+
+      .scenario-link.active {
+        background: var(--sidebar-active);
+      }
+
+      .scenario-key {
+        color: var(--sidebar-muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .scenario-title {
+        margin-top: 6px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .main {
+        padding: 28px 20px 56px;
+      }
+
+      .page {
+        max-width: 920px;
+        margin: 0 auto;
+      }
+
+      .hero {
+        padding: 26px 28px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .crumb {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .badge {
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: rgba(15, 118, 110, 0.1);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .ticket-key {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 10px 0 0;
+        font-size: 36px;
+        line-height: 1.08;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+      }
+
+      .lead {
+        max-width: 760px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .meta-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .meta {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface-soft);
+      }
+
+      .meta-label {
+        color: var(--soft);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meta-value {
+        margin-top: 7px;
+        font-size: 14px;
+      }
+
+      .stack {
+        display: grid;
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .section {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 18px 0;
+      }
+
+      .section-title {
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .section-kicker {
+        color: var(--soft);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-body {
+        padding: 16px 18px 18px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .subcard {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface-soft);
+      }
+
+      .subcard-title {
+        margin-bottom: 10px;
+        color: var(--soft);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .bullet-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .bullet-list li {
+        position: relative;
+        padding-left: 16px;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .bullet-list li::before {
+        content: "";
+        position: absolute;
+        top: 0.72em;
+        left: 0;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: #cbd5e1;
+      }
+
+      .text-block {
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.75;
+      }
+
+      .grid-side {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .item {
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .item:first-child {
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .item-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .item-meta {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .log-step {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .error-box {
+        padding: 18px;
+        border: 1px solid rgba(180, 35, 24, 0.16);
+        border-radius: 16px;
+        background: #fff6f5;
+        color: #b42318;
+      }
+
+      @media (max-width: 1024px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: relative;
+          height: auto;
+        }
+
+        .main {
+          padding: 18px 14px 40px;
+        }
+
+        .meta-row,
+        .grid-2,
+        .grid-side {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-title">AI Support Demo</div>
+          <div class="brand-copy">
+            Faux tickets support pour lire rapidement l’analyse IA, la note interne et les brouillons de réponse.
+          </div>
+        </div>
+
+        <div class="sidebar-label">Demo tickets</div>
+        <div class="scenario-list">
+          {% for scenario in scenarios %}
+            <a
+              class="scenario-link {% if scenario.scenario_id == selected_scenario_id %}active{% endif %}"
+              href="/demo-ui/?scenario_id={{ scenario.scenario_id }}"
+            >
+              <div class="scenario-key">{{ scenario.ticket_key }}</div>
+              <div class="scenario-title">{{ scenario.summary }}</div>
+            </a>
+          {% endfor %}
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="page">
+          {% if error %}
+            <div class="error-box">
+              <strong>Erreur</strong>
+              <div style="margin-top: 8px;">{{ error.message }}</div>
+              <div style="margin-top: 6px;">{{ error.details }}</div>
+            </div>
+          {% elif report %}
+            <section class="hero">
+              <div class="hero-top">
+                <div class="crumb">Demo workspace / report</div>
+                <div class="badge">Confidence {{ report.sections.overview.confidence }}</div>
+              </div>
+
+              <div class="ticket-key">{{ report.jira_key }}</div>
+              <h1>{{ report.sections.overview.first_impression or "AI analysis report" }}</h1>
+              <div class="lead">
+                Interface de lecture simple pour juger le raisonnement, les points d’action, les tickets liés,
+                la documentation utile et les réponses proposées.
+              </div>
+
+              <div class="meta-row">
+                <div class="meta">
+                  <div class="meta-label">Scenario</div>
+                  <div class="meta-value">{{ report.scenario_id }}</div>
+                </div>
+                <div class="meta">
+                  <div class="meta-label">Issue Type</div>
+                  <div class="meta-value">{{ report.sections.analysis.issue_type or "n/a" }}</div>
+                </div>
+                <div class="meta">
+                  <div class="meta-label">Risk</div>
+                  <div class="meta-value">{{ report.sections.analysis.risk_level or "n/a" }}</div>
+                </div>
+                <div class="meta">
+                  <div class="meta-label">Related Tickets</div>
+                  <div class="meta-value">{{ report.sections.related_tickets|length }}</div>
+                </div>
+              </div>
+            </section>
+
+            <div class="stack">
+              <section class="section">
+                <div class="section-header">
+                  <div class="section-title">Analysis</div>
+                  <div class="section-kicker">assistant</div>
+                </div>
+                <div class="section-body grid-2">
+                  <div class="subcard">
+                    <div class="subcard-title">Observations</div>
+                    <ul class="bullet-list">
+                      {% for item in report.sections.analysis.observations %}
+                        <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  <div class="subcard">
+                    <div class="subcard-title">Hypotheses</div>
+                    <ul class="bullet-list">
+                      {% for item in report.sections.analysis.hypotheses %}
+                        <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              <section class="section">
+                <div class="section-header">
+                  <div class="section-title">Next Steps</div>
+                  <div class="section-kicker">assistant</div>
+                </div>
+                <div class="section-body grid-2">
+                  <div class="subcard">
+                    <div class="subcard-title">Missing Information</div>
+                    <ul class="bullet-list">
+                      {% for item in report.sections.analysis.missing_information %}
+                        <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  <div class="subcard">
+                    <div class="subcard-title">Prevention Actions</div>
+                    <ul class="bullet-list">
+                      {% for item in report.sections.analysis.prevention_actions %}
+                        <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              <section class="section">
+                <div class="section-header">
+                  <div class="section-title">Reply Draft FR</div>
+                  <div class="section-kicker">assistant</div>
+                </div>
+                <div class="section-body">
+                  <div class="text-block">{{ report.sections.reply_fr }}</div>
+                </div>
+              </section>
+
+              <section class="section">
+                <div class="section-header">
+                  <div class="section-title">Reply Draft EN</div>
+                  <div class="section-kicker">assistant</div>
+                </div>
+                <div class="section-body">
+                  <div class="text-block">{{ report.sections.reply_en }}</div>
+                </div>
+              </section>
+
+              <section class="section">
+                <div class="section-header">
+                  <div class="section-title">Internal Note</div>
+                  <div class="section-kicker">internal</div>
+                </div>
+                <div class="section-body">
+                  <div class="text-block">{{ report.sections.internal_note }}</div>
+                </div>
+              </section>
+
+              <div class="grid-side">
+                <section class="section">
+                  <div class="section-header">
+                    <div class="section-title">Related Tickets</div>
+                    <div class="section-kicker">history</div>
+                  </div>
+                  <div class="section-body">
+                    {% for item in report.sections.related_tickets %}
+                      <div class="item">
+                        <div class="item-title">{{ item.jira_key }}</div>
+                        <div class="item-meta">Score {{ item.score }}</div>
+                        <div class="item-meta">{{ item.reason }}</div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </section>
+
+                <section class="section">
+                  <div class="section-header">
+                    <div class="section-title">Related Documentation</div>
+                    <div class="section-kicker">references</div>
+                  </div>
+                  <div class="section-body">
+                    {% for item in report.sections.related_docs %}
+                      <div class="item">
+                        <div class="item-title">{{ item.title }}</div>
+                        <div class="item-meta">{{ item.path }}</div>
+                        <div class="item-meta">{{ item.reason }}</div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </section>
+              </div>
+
+              <section class="section">
+                <div class="section-header">
+                  <div class="section-title">Execution Logs</div>
+                  <div class="section-kicker">trace</div>
+                </div>
+                <div class="section-body">
+                  {% for item in report.sections.logs %}
+                    <div class="item">
+                      <div class="item-title"><span class="log-step">{{ item.step }}</span></div>
+                      <div class="item-meta">{{ item.status }}</div>
+                      <div class="item-meta">{{ item.details }}</div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </section>
+            </div>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
